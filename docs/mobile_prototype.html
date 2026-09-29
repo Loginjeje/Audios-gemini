@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12241f">
+  <title>Voz Clara</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #edf4ed;
+      --muted: #a9b9ad;
+      --panel: #19312a;
+      --panel-light: #214238;
+      --line: #315247;
+      --accent: #e2b96b;
+      --accent-ink: #221b0d;
+      --danger: #e77c6a;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #12241f; color: var(--ink); }
+    main { width: min(100%, 480px); min-height: 100vh; margin: auto; padding: 1.25rem 1rem 6rem; background: #12241f; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    .eyebrow { margin: 0 0 .35rem; color: var(--accent); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-family: Georgia, serif; font-size: 2rem; letter-spacing: 0; }
+    h2 { margin-bottom: .35rem; font-size: 1.25rem; }
+    .signal { display: flex; gap: .35rem; align-items: center; color: var(--muted); font-size: .78rem; }
+    .signal-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #71c58e; }
+    .signal-dot.live { background: var(--danger); box-shadow: 0 0 0 .3rem #e77c6a22; }
+    .hero { padding: 1.25rem; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(145deg, #214238, #19312a); }
+    .hero p { color: var(--muted); line-height: 1.5; }
+    .mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: 1rem 0; }
+    .mode { border: 1px solid var(--line); border-radius: 10px; padding: .75rem; background: transparent; color: var(--muted); text-align: left; cursor: pointer; }
+    .mode.active { border-color: var(--accent); background: #e2b96b14; color: var(--ink); }
+    .mode strong, .mode span { display: block; }
+    .mode span { margin-top: .2rem; font-size: .76rem; }
+    .record-area { display: grid; justify-items: center; gap: .75rem; padding: 1.5rem 0 .75rem; }
+    .record-button { width: 112px; height: 112px; border: 9px solid #e2b96b33; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 2.2rem; cursor: pointer; box-shadow: 0 12px 35px #00000035; }
+    .record-button.recording { border-color: #e77c6a55; background: var(--danger); color: white; animation: pulse 1.4s infinite; }
+    .timer { min-width: 5ch; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }
+    @keyframes pulse { 50% { transform: scale(1.05); } }
+    .label { margin: .75rem 0 .45rem; color: var(--muted); font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .transcript { min-height: 9rem; margin-bottom: .75rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; background: #0d1c18; color: var(--ink); line-height: 1.55; }
+    .transcript.empty { color: #70847a; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    button { font: inherit; }
+    .primary, .secondary { min-height: 46px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    .primary { border: 0; background: var(--accent); color: var(--accent-ink); }
+    .secondary { border: 1px solid var(--line); background: transparent; color: var(--ink); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    .status { min-height: 1.2rem; margin: .9rem 0; color: var(--muted); font-size: .82rem; }
+    .history { margin-top: 1.5rem; }
+    .history-head { display: flex; align-items: baseline; justify-content: space-between; }
+    .history-head button { border: 0; background: none; color: var(--accent); cursor: pointer; }
+    .session { display: grid; grid-template-columns: 1fr auto; gap: .3rem 1rem; margin-top: .65rem; padding: .85rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .session strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session small { color: var(--muted); }
+    .session button { grid-row: span 2; border: 0; background: none; color: var(--accent); cursor: pointer; }
+    nav { position: fixed; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; padding: .7rem 1rem calc(.7rem + env(safe-area-inset-bottom)); background: #12241fee; border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
+    nav div { display: flex; width: min(100%, 460px); justify-content: space-around; color: var(--muted); font-size: .72rem; }
+    nav span { display: grid; justify-items: center; gap: .15rem; }
+    nav b { color: var(--accent); font-size: 1.1rem; }
+    @media (min-width: 600px) { body { padding: 2rem 0; } main { min-height: calc(100vh - 4rem); border: 1px solid var(--line); border-radius: 24px; } nav { position: static; margin: 1rem -1rem -5rem; border-radius: 0 0 24px 24px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><p class="eyebrow">Laboratorio de voz</p><h1>Voz Clara</h1></div>
+      <div class="signal"><span class="signal-dot" id="signalDot"></span><span id="connection">Listo</span></div>
+    </header>
+
+    <section class="hero" aria-labelledby="screenTitle">
+      <h2 id="screenTitle">Captura una idea</h2>
+      <p>Graba una nota y revisa su transcripción al instante.</p>
+      <div class="mode-row" role="tablist" aria-label="Modo de transcripción">
+        <button class="mode active" id="liveMode" role="tab" aria-selected="true"><strong>En vivo</strong><span>Web Speech API</span></button>
+        <button class="mode" id="batchMode" role="tab" aria-selected="false"><strong>Por lotes</strong><span>Gemini + audio</span></button>
+      </div>
+      <div class="record-area">
+        <button class="record-button" id="recordButton" aria-label="Iniciar grabación">●</button>
+        <span class="timer" id="timer">00:00</span>
+      </div>
+      <p class="status" id="status" role="status">Pulsa el círculo para comenzar.</p>
+      <p class="label">Transcripción</p>
+      <div class="transcript empty" id="transcript" aria-live="polite">Tu texto aparecerá aquí mientras hablas.</div>
+      <div class="actions">
+        <button class="secondary" id="clearButton">Limpiar</button>
+        <button class="primary" id="saveButton" disabled>Guardar sesión</button>
+      </div>
+    </section>
+
+    <section class="history" aria-labelledby="historyTitle">
+      <div class="history-head"><h2 id="historyTitle">Sesiones recientes</h2><button id="downloadAll">Exportar</button></div>
+      <div id="sessionList"><p class="status">Todavía no hay sesiones guardadas.</p></div>
+    </section>
+  </main>
+  <nav aria-label="Navegación principal"><div><span><b>●</b>Grabar</span><span><b>⌁</b>Sesiones</span><span><b>⋯</b>Más</span></div></nav>
+
+  <script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recordButton = document.querySelector("#recordButton");
+    const transcriptBox = document.querySelector("#transcript");
+    const status = document.querySelector("#status");
+    const timer = document.querySelector("#timer");
+    const saveButton = document.querySelector("#saveButton");
+    const sessionList = document.querySelector("#sessionList");
+    const signalDot = document.querySelector("#signalDot");
+    const connection = document.querySelector("#connection");
+    let mediaRecorder;
+    let audioChunks = [];
+    let recognition;
+    let timerId;
+    let seconds = 0;
+    let isRecording = false;
+    let finalTranscript = "";
+    let sessions = JSON.parse(localStorage.getItem("voz-clara-sessions") || "[]");
+
+    function renderTimer() {
+      timer.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+    }
+
+    function setTranscript(text) {
+      transcriptBox.textContent = text || "Tu texto aparecerá aquí mientras hablas.";
+      transcriptBox.classList.toggle("empty", !text);
+      saveButton.disabled = !text.trim();
+    }
+
+    function renderSessions() {
+      if (!sessions.length) { sessionList.innerHTML = '<p class="status">Todavía no hay sesiones guardadas.</p>'; return; }
+      sessionList.innerHTML = sessions.slice(0, 5).map((session, index) => `<article class="session"><div><strong>${session.title}</strong><small>${session.duration} · ${session.mode}</small></div><button data-session="${index}" aria-label="Descargar ${session.title}">↓</button></article>`).join("");
+    }
+
+    async function startRecorder() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+      mediaRecorder.onstop = () => stream.getTracks().forEach(track => track.stop());
+      mediaRecorder.start();
+    }
+
+    function startRecognition() {
+      if (!SpeechRecognition) { status.textContent = "Web Speech API no está disponible en este navegador."; return; }
+      recognition = new SpeechRecognition();
+      recognition.lang = "es-ES";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.onresult = event => {
+        let interim = "";
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const phrase = event.results[index][0].transcript;
+          if (event.results[index].isFinal) finalTranscript += `${phrase} `;
+          else interim += phrase;
+        }
+        setTranscript(`${finalTranscript}${interim}`.trim());
+      };
+      recognition.onerror = event => { status.textContent = `No se pudo reconocer la voz: ${event.error}`; };
+      recognition.onend = () => { if (isRecording) recognition.start(); };
+      recognition.start();
+    }
+
+    async function startRecording() {
+      try {
+        await startRecorder();
+        finalTranscript = "";
+        seconds = 0;
+        renderTimer();
+        startRecognition();
+        isRecording = true;
+        recordButton.classList.add("recording");
+        recordButton.setAttribute("aria-label", "Detener grabación");
+        signalDot.classList.add("live");
+        connection.textContent = "Grabando";
+        status.textContent = "Escuchando... habla con naturalidad.";
+        timerId = setInterval(() => { seconds += 1; renderTimer(); }, 1000);
+      } catch (error) { status.textContent = "No se pudo acceder al micrófono. Revisa los permisos."; }
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      clearInterval(timerId);
+      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      if (recognition) recognition.stop();
+      recordButton.classList.remove("recording");
+      recordButton.setAttribute("aria-label", "Iniciar grabación");
+      signalDot.classList.remove("live");
+      connection.textContent = "Listo";
+      status.textContent = "Grabación terminada. Revisa el texto antes de guardarlo.";
+    }
+
+    recordButton.onclick = () => isRecording ? stopRecording() : startRecording();
+    document.querySelector("#clearButton").onclick = () => { if (isRecording) stopRecording(); finalTranscript = ""; setTranscript(""); seconds = 0; renderTimer(); status.textContent = "Pulsa el círculo para comenzar."; };
+    document.querySelector("#liveMode").onclick = () => { status.textContent = "Modo en vivo: Web Speech API."; };
+    document.querySelector("#batchMode").onclick = () => { status.textContent = "Modo por lotes: descarga el audio y procésalo con Gemini."; };
+    saveButton.onclick = () => {
+      const title = `Sesión ${new Date().toLocaleDateString("es-ES")}`;
+      sessions.unshift({ title, duration: timer.textContent, mode: "Web Speech API", transcript: finalTranscript.trim(), createdAt: new Date().toISOString() });
+      localStorage.setItem("voz-clara-sessions", JSON.stringify(sessions));
+      renderSessions();
+      status.textContent = "Sesión guardada.";
+    };
+    document.querySelector("#downloadAll").onclick = () => {
+      const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: "application/json" });
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "voz-clara-sesiones.json"; link.click(); URL.revokeObjectURL(link.href);
+    };
+    sessionList.onclick = event => {
+      const button = event.target.closest("button[data-session]");
+      if (!button) return;
+      const session = sessions[Number(button.dataset.session)];
+      const blob = new Blob([session.transcript], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${session.title}.txt`; link.click(); URL.revokeObjectURL(link.href);
+    };
+    renderSessions();
+  </script>
+</body>
+</html>

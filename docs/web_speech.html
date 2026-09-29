@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comparación de transcripción</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; }
+    body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #17202a; }
+    h1 { margin-bottom: .3rem; }
+    .note { color: #566573; }
+    section { border: 1px solid #d5dbdb; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    button { cursor: pointer; padding: .6rem .9rem; border: 0; border-radius: 6px; background: #1769aa; color: white; }
+    button.stop { background: #b03a2e; }
+    button:disabled { opacity: .5; cursor: default; }
+    .reference { font-weight: 600; }
+    .transcript { min-height: 2.5rem; padding: .7rem; background: #f4f6f7; border-radius: 5px; }
+    #status { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Web Speech API: transcripción en tiempo real</h1>
+  <p class="note">Abre esta página en Chrome o Edge, permite el micrófono y lee cada frase. Copia los resultados al archivo JSON indicado en README.md.</p>
+  <p id="status">Estado: listo</p>
+  <div id="tests"></div>
+  <script>
+    const phrases = [
+      "La tecnología puede hacer más accesible la educación.",
+      "Mañana vamos a comparar dos métodos de transcripción de audio.",
+      "Una buena aplicación debe ser precisa, rápida y fácil de usar."
+    ];
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const status = document.querySelector("#status");
+    const tests = document.querySelector("#tests");
+
+    if (!SpeechRecognition) {
+      status.textContent = "Este navegador no ofrece Web Speech API. Usa Chrome o Edge.";
+    }
+
+    phrases.forEach((phrase, index) => {
+      const section = document.createElement("section");
+      section.innerHTML = `<h2>Audio ${index + 1}</h2><p class="reference">Referencia: ${phrase}</p><button>Iniciar</button><p class="transcript" aria-live="polite">Sin resultado todavía.</p>`;
+      const button = section.querySelector("button");
+      const transcript = section.querySelector(".transcript");
+      tests.append(section);
+      if (!SpeechRecognition) { button.disabled = true; return; }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "es-ES";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.onstart = () => { button.textContent = "Detener"; button.classList.add("stop"); status.textContent = `Escuchando audio ${index + 1}...`; };
+      recognition.onresult = event => { transcript.textContent = Array.from(event.results).map(result => result[0].transcript).join(" "); };
+      recognition.onerror = event => { status.textContent = `Error en audio ${index + 1}: ${event.error}`; };
+      recognition.onend = () => { button.textContent = "Iniciar"; button.classList.remove("stop"); status.textContent = "Estado: listo"; };
+      button.onclick = () => button.classList.contains("stop") ? recognition.stop() : recognition.start();
+    });
+  </script>
+</body>
+</html>
